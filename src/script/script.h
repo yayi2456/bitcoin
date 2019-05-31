@@ -493,7 +493,8 @@ public:
         return *this;
     }
 
-
+//获取指定pc开始的一个操作符以及它所对应的全部操作数，放在vchRet中。
+//pc更新
     bool GetOp(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet) const
     {
         return GetScriptOp(pc, end(), opcodeRet, &vchRet);

@@ -40,17 +40,18 @@ public:
     friend bool operator<(const COutPoint& a, const COutPoint& b)
     {
         int cmp = a.hash.Compare(b.hash);
-        return cmp < 0 || (cmp == 0 && a.n < b.n);
+        return cmp < 0 || (cmp == 0 && a.n < b.n);//如果a的哈希小于b的哈希 或者a的哈希等于b的哈希但是a的index更小
     }
 
     friend bool operator==(const COutPoint& a, const COutPoint& b)
     {
-        return (a.hash == b.hash && a.n == b.n);
+        return (a.hash == b.hash && a.n == b.n);//更大概率是同一个啦！，但是钻个牛角尖，一定是同一个吗？NOTE
+        //如果可能出现漏洞又会造成什么损失呢？
     }
 
     friend bool operator!=(const COutPoint& a, const COutPoint& b)
     {
-        return !(a == b);
+        return !(a == b);//注意这里比较的可不是哈希喔，应该是使用上一个==定义的。
     }
 
     std::string ToString() const;
@@ -63,9 +64,9 @@ public:
 class CTxIn
 {
 public:
-    COutPoint prevout;
-    CScript scriptSig;
-    uint32_t nSequence;
+    COutPoint prevout;//前一个输出：你的UTXO
+    CScript scriptSig;//签名
+    uint32_t nSequence;//
     CScriptWitness scriptWitness; //!< Only serialized through CTransaction
 
     /* Setting nSequence to this value for every input in a transaction
@@ -133,8 +134,8 @@ public:
 class CTxOut
 {
 public:
-    CAmount nValue;
-    CScript scriptPubKey;
+    CAmount nValue;//多少钱
+    CScript scriptPubKey;//锁定脚本
 
     CTxOut()
     {
@@ -159,7 +160,7 @@ public:
 
     bool IsNull() const
     {
-        return (nValue == -1);
+        return (nValue == -1);//被花掉的话，数值设为-1
     }
 
     friend bool operator==(const CTxOut& a, const CTxOut& b)
@@ -284,7 +285,7 @@ public:
     // actually immutable; deserialization and assignment are implemented,
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
-    const std::vector<CTxIn> vin;
+    const std::vector<CTxIn> vin;//交易给钱的人
     const std::vector<CTxOut> vout;
     const int32_t nVersion;
     const uint32_t nLockTime;
@@ -336,7 +337,7 @@ public:
 
     bool IsCoinBase() const
     {
-        return (vin.size() == 1 && vin[0].prevout.IsNull());
+        return (vin.size() == 1 && vin[0].prevout.IsNull());//只有一个vin，而且没有指向UTXO...
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
@@ -363,6 +364,7 @@ public:
 };
 
 /** A mutable version of CTransaction. */
+//交易的易变版本？？？
 struct CMutableTransaction
 {
     std::vector<CTxIn> vin;
@@ -397,7 +399,7 @@ struct CMutableTransaction
     bool HasWitness() const
     {
         for (size_t i = 0; i < vin.size(); i++) {
-            if (!vin[i].scriptWitness.IsNull()) {
+            if (!vin[i].scriptWitness.IsNull()) {//emm
                 return true;
             }
         }

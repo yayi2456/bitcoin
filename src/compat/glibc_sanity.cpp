@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+
+//sanity：明智，头脑清楚
 #if defined(HAVE_CONFIG_H)
 #include <config/bitcoin-config.h>
 #endif

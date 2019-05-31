@@ -14,11 +14,28 @@
 
 #include <compat/endian.h>
 
+
+/**小大端模式我都快分不清了。
+ * 小端模式：不符合日常习惯，低地址存储低位：
+ * 比如：x=0xAF231C76，存储方式：byte[4]
+ * byte[0]=76，byte[1]=1C，byte[2]=23，byte[3]=AF
+ * 大端模式：低地址存储高位：
+ * 还是上面的例子：
+ * byte[0]=AF，byte[1]=23，byte[2]=1C，byte[3]=76
+ * 常用模式是大端模式
+ * */
 uint16_t static inline ReadLE16(const unsigned char* ptr)
 {
     uint16_t x;
-    memcpy((char*)&x, ptr, 2);
-    return le16toh(x);
+    memcpy((char*)&x, ptr, 2);//因为是ReadLE16啊。小端模式，16bits
+    return le16toh(x);//renturn x
+    /*
+    inline uint16_t le16toh(uint16_t little_endian_16bits)
+{
+    return little_endian_16bits;
+}
+NOTE：这是什么操作....有什么意义啊
+    */
 }
 
 uint32_t static inline ReadLE32(const unsigned char* ptr)

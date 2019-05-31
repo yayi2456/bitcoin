@@ -59,19 +59,30 @@ CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), 
 
 uint256 CMutableTransaction::GetHash() const
 {
+     //参数：一个tx对象、
+    //SER_GETHASH：一个枚举类型，代表这个序列化类型是GETHASH的序列化，值是1<<2也就是4.
+    //SERIALIZE_TRANSACTION_NO_WITNESS是一个const的静态变量，值是：0x40000000
+    //函数说明： Compute the 256-bit hash of an object's serialization. 
+    //别管具体实现了，知道就行。实在想看对理解代码功能也没什么太大帮助。
     return SerializeHash(*this, SER_GETHASH, SERIALIZE_TRANSACTION_NO_WITNESS);
 }
 
 uint256 CTransaction::ComputeHash() const
 {
+    //参数：一个tx对象、
+    //SER_GETHASH：一个枚举类型，代表这个序列化类型是GETHASH的序列化，值是1<<2也就是4.
+    //SERIALIZE_TRANSACTION_NO_WITNESS是一个const的静态变量，值是：0x40000000
+    //函数说明： Compute the 256-bit hash of an object's serialization. 
+    //别管具体实现了，知道就行。实在想看对理解代码功能也没什么太大帮助。
     return SerializeHash(*this, SER_GETHASH, SERIALIZE_TRANSACTION_NO_WITNESS);
 }
 
 uint256 CTransaction::ComputeWitnessHash() const
 {
-    if (!HasWitness()) {
+    if (!HasWitness()) {//NOTE：还不确定：猜是有个交易发送者搁这儿监视这个交易呢
         return hash;
     }
+    //
     return SerializeHash(*this, SER_GETHASH, 0);
 }
 

@@ -13,13 +13,17 @@
 
 namespace Consensus {
 
+
+//BIP：Bitcoin improve proposal，比特币改进协议
+//see：doc/bips.md
+//emm，NOTE：我感觉BIP可以看作是bitcoin的内核的一个一个版本
 enum DeploymentPos
 {
     DEPLOYMENT_TESTDUMMY,
     DEPLOYMENT_CSV, // Deployment of BIP68, BIP112, and BIP113.
     DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
-    MAX_VERSION_BITS_DEPLOYMENTS
+    MAX_VERSION_BITS_DEPLOYMENTS//
 };
 
 /**
@@ -29,7 +33,7 @@ struct BIP9Deployment {
     /** Bit position to select the particular bit in nVersion. */
     int bit;
     /** Start MedianTime for version bits miner confirmation. Can be a date in the past */
-    int64_t nStartTime;
+    int64_t nStartTime;//
     /** Timeout/expiry MedianTime for the deployment attempt. */
     int64_t nTimeout;
 
@@ -40,15 +44,17 @@ struct BIP9Deployment {
      *  This is useful for testing, as it means tests don't need to deal with the activation
      *  process (which takes at least 3 BIP9 intervals). Only tests that specifically test the
      *  behaviour during activation cannot use this. */
-    static constexpr int64_t ALWAYS_ACTIVE = -1;
+    static constexpr int64_t ALWAYS_ACTIVE = -1;//什么活跃？
 };
 
 /**
  * Parameters that influence chain consensus.
  */
+//与公式有关的参数
+
 struct Params {
-    uint256 hashGenesisBlock;
-    int nSubsidyHalvingInterval;
+    uint256 hashGenesisBlock;//
+    int nSubsidyHalvingInterval;//
     /* Block hash that is excepted from BIP16 enforcement */
     uint256 BIP16Exception;
     /** Block height and hash at which BIP34 becomes active */
@@ -67,6 +73,7 @@ struct Params {
     uint32_t nMinerConfirmationWindow;
     BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
     /** Proof of work parameters */
+    //POW相关参数
     uint256 powLimit;
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;

@@ -30,12 +30,14 @@ class Coin
 {
 public:
     //! unspent transaction output
+    //输出，包括锁定脚本以及数额
     CTxOut out;
 
     //! whether containing transaction was a coinbase
     unsigned int fCoinBase : 1;
 
     //! at which height this containing transaction was included in the active block chain
+    //NOTE：这个height指的是什么？是交易的index还是块的index，虽然我更偏向前者。
     uint32_t nHeight : 31;
 
     //! construct a Coin from a CTxOut and height/coinbase information.

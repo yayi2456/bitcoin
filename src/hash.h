@@ -25,14 +25,15 @@ private:
 public:
     static const size_t OUTPUT_SIZE = CSHA256::OUTPUT_SIZE;
 
+//
     void Finalize(unsigned char hash[OUTPUT_SIZE]) {
         unsigned char buf[CSHA256::OUTPUT_SIZE];
-        sha.Finalize(buf);
-        sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
+        sha.Finalize(buf);//向buf中写入了人一些数据//NOTE：为啥不是回收？
+        sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);//像hash中写入了buf中的一些数据为基础生成的一些数据
     }
 
     CHash256& Write(const unsigned char *data, size_t len) {
-        sha.Write(data, len);
+        sha.Write(data, len);//把data中的数据写到一个buffer并处理
         return *this;
     }
 
@@ -135,6 +136,7 @@ public:
     // invalidates the object
     uint256 GetHash() {
         uint256 result;
+        //总之就是写了一些数据
         ctx.Finalize((unsigned char*)&result);
         return result;
     }
@@ -195,9 +197,9 @@ public:
 template<typename T>
 uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
 {
-    CHashWriter ss(nType, nVersion);
-    ss << obj;
-    return ss.GetHash();
+    CHashWriter ss(nType, nVersion);//初始化一个用来写hash的writer
+    ss << obj;//object与ss产生关联？不太懂。
+    return ss.GetHash();//得到哈希
 }
 
 unsigned int MurmurHash3(unsigned int nHashSeed, const std::vector<unsigned char>& vDataToHash);

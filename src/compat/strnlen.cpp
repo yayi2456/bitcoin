@@ -13,6 +13,6 @@ size_t strnlen( const char *start, size_t max_len)
 {
     const char *end = (const char *)memchr(start, '\0', max_len);
 
-    return end ? (size_t)(end - start) : max_len;
+    return end ? (size_t)(end - start) : max_len;//const char的长度吧，为啥要这样写，为什么要单独写一个文件啊，NOTE
 }
 #endif // HAVE_DECL_STRNLEN

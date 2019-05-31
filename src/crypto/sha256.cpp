@@ -673,12 +673,12 @@ CSHA256& CSHA256::Write(const unsigned char* data, size_t len)
 
 void CSHA256::Finalize(unsigned char hash[OUTPUT_SIZE])
 {
-    static const unsigned char pad[64] = {0x80};
-    unsigned char sizedesc[8];
-    WriteBE64(sizedesc, bytes << 3);
-    Write(pad, 1 + ((119 - (bytes % 64)) % 64));
-    Write(sizedesc, 8);
-    WriteBE32(hash, s[0]);
+    static const unsigned char pad[64] = {0x80};//
+    unsigned char sizedesc[8];//
+    WriteBE64(sizedesc, bytes << 3);//对byte<<3做了一系列变换，把变换后的8个byte写入了sizedesc空间内
+    Write(pad, 1 + ((119 - (bytes % 64)) % 64));//写入pad中的第二个参数长度的一些数据
+    Write(sizedesc, 8);//写入sizedesc中的8byte数据
+    WriteBE32(hash, s[0]);//类似WriteBE64，只是变换方式不同
     WriteBE32(hash + 4, s[1]);
     WriteBE32(hash + 8, s[2]);
     WriteBE32(hash + 12, s[3]);
@@ -686,6 +686,7 @@ void CSHA256::Finalize(unsigned char hash[OUTPUT_SIZE])
     WriteBE32(hash + 20, s[5]);
     WriteBE32(hash + 24, s[6]);
     WriteBE32(hash + 28, s[7]);
+    //总之就是把hash空间里写满了数据
 }
 
 CSHA256& CSHA256::Reset()

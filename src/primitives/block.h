@@ -10,22 +10,25 @@
 #include <serialize.h>
 #include <uint256.h>
 
-/** Nodes collect new transactions into a block, hash them into a hash tree,
+/** Nodes collect new transactions into a block, hash them into a hash tree, 怎么hash them in a hash tree呢？就是merkle树吗？
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
- * to everyone and the block is added to the block chain.  The first transaction
+ * to everyone and the block is added to the block chain. 
+ * 
+ *  The first transaction
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
  */
+//
 class CBlockHeader
 {
 public:
     // header
-    int32_t nVersion;
+    int32_t nVersion;//NOTE：这个版本是干啥的
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
     uint32_t nTime;
-    uint32_t nBits;
+    uint32_t nBits;//NOTE：干嘛？不会是整个块有多少个bits？
     uint32_t nNonce;
 
     CBlockHeader()
@@ -73,10 +76,10 @@ class CBlock : public CBlockHeader
 {
 public:
     // network and disk
-    std::vector<CTransactionRef> vtx;
+    std::vector<CTransactionRef> vtx;//交易列表们
 
     // memory only
-    mutable bool fChecked;
+    mutable bool fChecked;//被mutable修饰的参数，即使是在const的函数中也是可以被改变的，即：永远可变。
 
     CBlock()
     {
@@ -120,8 +123,9 @@ public:
 };
 
 /** Describes a place in the block chain to another node such that if the
- * other node doesn't have the same branch, it can find a recent common trunk.
+ * other node doesn't have the same branch, it can find a recent common trunk.//trunk 树干
  * The further back it is, the further before the fork it may be.
+ * 
  */
 struct CBlockLocator
 {

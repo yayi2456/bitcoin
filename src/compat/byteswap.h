@@ -33,9 +33,10 @@
 // Non-Mac OS X / non-Darwin
 
 #if HAVE_DECL_BSWAP_16 == 0
+//其实做的就是移位操作~
 inline uint16_t bswap_16(uint16_t x)
 {
-    return (x >> 8) | (x << 8);
+    return (x >> 8) | (x << 8);//example：a=0xABCD->a=0xCDAB
 }
 #endif // HAVE_DECL_BSWAP16 == 0
 
@@ -43,7 +44,7 @@ inline uint16_t bswap_16(uint16_t x)
 inline uint32_t bswap_32(uint32_t x)
 {
     return (((x & 0xff000000U) >> 24) | ((x & 0x00ff0000U) >>  8) |
-            ((x & 0x0000ff00U) <<  8) | ((x & 0x000000ffU) << 24));
+            ((x & 0x0000ff00U) <<  8) | ((x & 0x000000ffU) << 24));//a=0x12345678->a=0x78563412
 }
 #endif // HAVE_DECL_BSWAP32 == 0
 
@@ -57,7 +58,7 @@ inline uint64_t bswap_64(uint64_t x)
           | ((x & 0x00000000ff000000ull) << 8)
           | ((x & 0x0000000000ff0000ull) << 24)
           | ((x & 0x000000000000ff00ull) << 40)
-          | ((x & 0x00000000000000ffull) << 56));
+          | ((x & 0x00000000000000ffull) << 56));//a=0x1234567890ABCDEF->a=0xEFCDAB9078563412
 }
 #endif // HAVE_DECL_BSWAP64 == 0
 

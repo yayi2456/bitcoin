@@ -146,10 +146,39 @@ const char* GetOpName(opcodetype opcode)
     }
 }
 
+//NOTE：既然看到了就在这里解释一下几个协议吧。具体的解释可以在印象笔记里面找到喔~
+/**1. P2PKH：Pay-to-Public-Key-Hash
+ * 解锁脚本：<Sig><Pubkey>由接受方提供，用来证明自己的身份
+ * 锁定脚本：DUP HASH160 <PubKeyHash> EQUALVERIFY CHECKSIG
+ * 执行的时候，解锁脚本在前，锁定脚本在后，以逆波兰式基于栈的方式执行。
+ * 2. P2PK：Pay-to-Public-Key
+ * 与P2PKH比较，省去了验证Pubkey hahs的过程：
+ * 解锁脚本：<Sig>
+ * 锁定脚本：<PubKey> OP_CHECKSIG
+ * 3. MS：Multiple Signatures，主要用来允许多个签名与公钥的验证
+ * 解锁脚本：OP_0 <Sig1> <Sig2> ... <Sigm>，其中OP_0只是一个占位符，没有实际的意义。
+ * 锁定脚本：M <PubKey1> <PubKey2> ... <PubKeyn> N OP_CHECKMULTISIG，其中M是为了解锁需要的最少的PubKey数目
+ * 4. P2SH：Pay-to-Script-Hash：似乎是该版本的BItcoin常用的协议呢，是MS的变体
+ * 解锁脚本：<Sig1> <Sig2> <2 PK1 PK2 PK3 PK4 PK5 5 OP_CHECKMULTISIG>
+ * 锁定脚本：2 <Public Key A> <Public Key B> <Public Key C> 3 OP_CHECKMULTISIG
+ * 锁定脚本不会以原型方式存在，而是会被首先做SHA256hash，然后运用RIPEMD160，添加需要的运算，可以变为：（中间的哈希：hash od redeem script
+ * OP_HASH160 8ac1d7a2fa204a16dc984fa81cfdf86a2a4e1731 OP_EQUAL
+ * 最终脚本变为：<Sig1> <Sig2> <2 PK1 PK2 PK3 PK4 PK5 5 OP_CHECKMULTISIG> OP_HASH160 8ac1d7a2fa204a16dc984fa81cfdf86a2a4e1731 OP_EQUAL
+ * 首先会验证给出的解锁脚本是不是针对的是给出的锁定脚本，可以看到，这种方式的交易协议把制作脚本的责任推给了接收方。
+ * 可以暂缓节点存储的压力。
+ * 4.P2WSH：支持隔离见证的P2SH。以及P2WPKH：支持隔离见证的P2PKH
+ * 什么是隔离见证？什么是见证？见证就是上面说的“锁定脚本”以及“解锁脚本”，隔离见证就是把这两者隔离出来。
+ * 为什么要隔离出来？之前，见证是直接被封装在交易里面的。对于P2SH这种多输入多输出来说，会比较占空间。于是决定隔离出来，装到一个叫做SigWit的数据结构中。
+ * 
+ * 
+**/
+//获取该脚本中操作数的个数
+//设置：精确：获取脚本中实际存在的操作数的个数
+//设置：非精确：获取脚本中可以存在的最多的操作数的个数
 unsigned int CScript::GetSigOpCount(bool fAccurate) const
 {
     unsigned int n = 0;
-    const_iterator pc = begin();
+    const_iterator pc = begin();//
     opcodetype lastOpcode = OP_INVALIDOPCODE;
     while (pc < end())
     {
@@ -159,11 +188,11 @@ unsigned int CScript::GetSigOpCount(bool fAccurate) const
         if (opcode == OP_CHECKSIG || opcode == OP_CHECKSIGVERIFY)
             n++;
         else if (opcode == OP_CHECKMULTISIG || opcode == OP_CHECKMULTISIGVERIFY)
-        {
+        {//很明显你属于MS那一挂的，所以需要看看你究竟有多少个OP呢？
             if (fAccurate && lastOpcode >= OP_1 && lastOpcode <= OP_16)
                 n += DecodeOP_N(lastOpcode);
             else
-                n += MAX_PUBKEYS_PER_MULTISIG;
+                n += MAX_PUBKEYS_PER_MULTISIG;//不精确的话，就给出最大值
         }
         lastOpcode = opcode;
     }
@@ -172,31 +201,34 @@ unsigned int CScript::GetSigOpCount(bool fAccurate) const
 
 unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
 {
-    if (!IsPayToScriptHash())
+    if (!IsPayToScriptHash())//协议不是P2SH！
         return GetSigOpCount(true);
 
     // This is a pay-to-script-hash scriptPubKey;
     // get the last item that the scriptSig
     // pushes onto the stack:
-    const_iterator pc = scriptSig.begin();
+    const_iterator pc = scriptSig.begin();//脚本开始
     std::vector<unsigned char> vData;
-    while (pc < scriptSig.end())
+    while (pc < scriptSig.end())//遍历脚本数据
     {
         opcodetype opcode;
-        if (!scriptSig.GetOp(pc, opcode, vData))
-            return 0;
-        if (opcode > OP_16)
+        if (!scriptSig.GetOp(pc, opcode, vData))//拿这个op以及他对应的操作数，更新pc，拿到opcode以及对应的操作数（存在vData中）//NOTE：函数里面有一个clear，不会把数据清除吗？我是不太懂啦
+            return 0;//不正确的格式
+        if (opcode > OP_16)//NOTE：不能出现除了OP_NUM之外的其他OP吗
             return 0;
     }
 
     /// ... and return its opcount:
+    //使用vaData重新构造一个脚本，然后计算
+    //为什么要这么做？
     CScript subscript(vData.begin(), vData.end());
-    return subscript.GetSigOpCount(true);
+    return subscript.GetSigOpCount(true);//返回精确的操作数们个数
 }
 
 bool CScript::IsPayToScriptHash() const
 {
     // Extra-fast test for pay-to-script-hash CScripts:
+    //验证协议是不是P2SH
     return (this->size() == 23 &&
             (*this)[0] == OP_HASH160 &&
             (*this)[1] == 0x14 &&
@@ -206,6 +238,7 @@ bool CScript::IsPayToScriptHash() const
 bool CScript::IsPayToWitnessScriptHash() const
 {
     // Extra-fast test for pay-to-witness-script-hash CScripts:
+    //
     return (this->size() == 34 &&
             (*this)[0] == OP_0 &&
             (*this)[1] == 0x20);
@@ -213,22 +246,25 @@ bool CScript::IsPayToWitnessScriptHash() const
 
 // A witness program is any valid CScript that consists of a 1-byte push opcode
 // followed by a data push between 2 and 40 bytes.
+//支持隔离见证的版本
+//它的特点就是，一个版本号1-byte，后面接着哈希值，20byte（P2WPKH）或者32byte（P2WSH）
 bool CScript::IsWitnessProgram(int& version, std::vector<unsigned char>& program) const
 {
     if (this->size() < 4 || this->size() > 42) {
-        return false;
+        return false;//size不对
     }
     if ((*this)[0] != OP_0 && ((*this)[0] < OP_1 || (*this)[0] > OP_16)) {
-        return false;
+        return false;//版本号不对
     }
     if ((size_t)((*this)[1] + 2) == this->size()) {
-        version = DecodeOP_N((opcodetype)(*this)[0]);
-        program = std::vector<unsigned char>(this->begin() + 2, this->end());
+        version = DecodeOP_N((opcodetype)(*this)[0]);//版本号
+        program = std::vector<unsigned char>(this->begin() + 2, this->end());//script hash
         return true;
     }
     return false;
 }
 
+//NOTE：我没太懂这个函数想干啥...
 bool CScript::IsPushOnly(const_iterator pc) const
 {
     while (pc < end())
@@ -248,13 +284,16 @@ bool CScript::IsPushOnly(const_iterator pc) const
 
 bool CScript::IsPushOnly() const
 {
-    return this->IsPushOnly(begin());
+    return this->IsPushOnly(begin());//em，NOTE：begin是谁，有this吗？
 }
 
 std::string CScriptWitness::ToString() const
 {
     std::string ret = "CScriptWitness(";
     for (unsigned int i = 0; i < stack.size(); i++) {
+    //哇感觉还蛮机智哒，因为第一个i不会有逗号啊，不过这样会不会加重了运行时的时间呢还是说编译的时候就会优化掉了呢。
+    //感觉像是编译+体系结构？
+    //NOTE
         if (i) {
             ret += ", ";
         }
@@ -262,7 +301,7 @@ std::string CScriptWitness::ToString() const
     }
     return ret + ")";
 }
-
+//给的这个script里面究竟有没有一个能用的op
 bool CScript::HasValidOps() const
 {
     CScript::const_iterator it = begin();
@@ -275,12 +314,12 @@ bool CScript::HasValidOps() const
     }
     return true;
 }
-
+//获取给定脚本中的给定pc开始的一个操作符以及他所对应的操作数
 bool GetScriptOp(CScriptBase::const_iterator& pc, CScriptBase::const_iterator end, opcodetype& opcodeRet, std::vector<unsigned char>* pvchRet)
 {
     opcodeRet = OP_INVALIDOPCODE;
     if (pvchRet)
-        pvchRet->clear();
+        pvchRet->clear();//eraser all
     if (pc >= end)
         return false;
 
@@ -289,41 +328,42 @@ bool GetScriptOp(CScriptBase::const_iterator& pc, CScriptBase::const_iterator en
         return false;
     unsigned int opcode = *pc++;
 
+//这下肯定有东西了
     // Immediate operand
     if (opcode <= OP_PUSHDATA4)
     {
         unsigned int nSize = 0;
-        if (opcode < OP_PUSHDATA1)
+        if (opcode < OP_PUSHDATA1)//OP_0
         {
             nSize = opcode;
         }
         else if (opcode == OP_PUSHDATA1)
         {
-            if (end - pc < 1)
+            if (end - pc < 1)//一定要有一个操作数啊
                 return false;
-            nSize = *pc++;
+            nSize = *pc++;//NOTE：nSize里面存的是操作数
         }
         else if (opcode == OP_PUSHDATA2)
         {
-            if (end - pc < 2)
+            if (end - pc < 2)//一定要有两个操作数啊
                 return false;
-            nSize = ReadLE16(&pc[0]);
-            pc += 2;
+            nSize = ReadLE16(&pc[0]);//16bits，拿到从&pc[0]地址开始的接下来的16bits的数值，即两个操作数
+            pc += 2;//跨过这两个操作数
         }
         else if (opcode == OP_PUSHDATA4)
         {
             if (end - pc < 4)
                 return false;
-            nSize = ReadLE32(&pc[0]);
-            pc += 4;
+            nSize = ReadLE32(&pc[0]);//32bits，拿到从&pc[0]地址开始的接下来的32bits的数值，即四个操作数
+            pc += 4;//跨这4个操作数
         }
         if (end - pc < 0 || (unsigned int)(end - pc) < nSize)
-            return false;
-        if (pvchRet)
-            pvchRet->assign(pc, pc + nSize);
-        pc += nSize;
+            return false;//地址对不上，一定是哪里出现了问题
+        if (pvchRet)//NOTE：？
+            pvchRet->assign(pc, pc + nSize);//把操作数给pvchRet
+        pc += nSize;//pc移位到下一个需要判断的位置
     }
 
-    opcodeRet = static_cast<opcodetype>(opcode);
+    opcodeRet = static_cast<opcodetype>(opcode);//拿到OP操作符
     return true;
 }

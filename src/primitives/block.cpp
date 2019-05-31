@@ -12,7 +12,7 @@
 
 uint256 CBlockHeader::GetHash() const
 {
-    return SerializeHash(*this);
+    return SerializeHash(*this);//反正就是序列化之后做了哈希，别问。
 }
 
 std::string CBlock::ToString() const

@@ -172,9 +172,9 @@ class CSizeComputer;
 enum
 {
     // primary actions
-    SER_NETWORK         = (1 << 0),
-    SER_DISK            = (1 << 1),
-    SER_GETHASH         = (1 << 2),
+    SER_NETWORK         = (1 << 0),//1
+    SER_DISK            = (1 << 1),//2
+    SER_GETHASH         = (1 << 2),//4
 };
 
 //! Convert the reference base type to X, without changing constness or reference type.

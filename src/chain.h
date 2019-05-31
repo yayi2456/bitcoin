@@ -143,6 +143,7 @@ public:
     const uint256* phashBlock;
 
     //! pointer to the index of the predecessor of this block
+    //前一个块的指针
     CBlockIndex* pprev;
 
     //! pointer to the index of some further predecessor of this block
@@ -282,7 +283,7 @@ public:
         return (int64_t)nTimeMax;
     }
 
-    static constexpr int nMedianTimeSpan = 11;
+    static constexpr int nMedianTimeSpan = 11;//NOTE：为什么是11
 
     int64_t GetMedianTimePast() const
     {
